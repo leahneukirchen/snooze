@@ -1,8 +1,8 @@
 ## snooze: run a command at a particular time
 
-`snooze` is a new tool for to wait until a particular time and then
-run a command.  Together with a service supervision system such as runit,
-this can be used to replace cron(8).
+`snooze` is a new tool for waiting until a particular time and then
+running a command.  Together with a service supervision system such as
+runit, this can be used to replace cron(8).
 
 `lr` has been tested on Linux 4.2.
 It will likely work on other Unix-like systems with C99.

@@ -31,7 +31,7 @@ static long slack = 60;
 #define SLEEP_PHASE 300
 static int nflag, vflag;
 
-static int timewait = 1;
+static int timewait = -1;
 static int randdelay = 0;
 static char *timefile;
 
@@ -200,6 +200,7 @@ isotime(const struct tm *tm)
 int main(int argc, char *argv[])
 {
 	int c;
+	time_t t;
 	time_t now = time(0);
 
 	/* default: every day at 00:00:00 */
@@ -248,8 +249,16 @@ int main(int argc, char *argv[])
 		if (stat(timefile, &st) < 0) {
 			if (errno != ENOENT)
 				perror("stat");
+			t = start - slack - 1 - timewait;
 		} else {
-			if (st.st_mtime + timewait > start)
+			t = st.st_mtime;
+		}
+		if (timewait == -1) {
+			while (t < start - slack)
+				t = find_next(t + 1);
+			start = t;
+		} else {
+			if (t + timewait > start)
 				start = st.st_mtime + timewait;
 		}
 	}
@@ -271,7 +280,7 @@ int main(int argc, char *argv[])
 		start += delay;
 	}
 
-	time_t t = find_next(start);
+	t = find_next(start);
 	if (t < 0) {
 		fprintf(stderr, "no satisfying date found within a year.\n");
 		exit(2);

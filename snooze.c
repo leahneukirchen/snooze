@@ -318,8 +318,18 @@ int main(int argc, char *argv[])
 		/* dry-run, just output the next 5 dates. */
 		int i;
 		for (i = 0; i < 5; i++) {
-			if (t > 0)
-				printf("%s\n", isotime(localtime(&t)));
+			if (t > 0) {
+				char weekstr[4];
+				struct tm *tm = localtime(&t);
+				strftime(weekstr, sizeof weekstr, "%a", tm);
+				printf("%s %s %2ldd%3ldh%3ldm%3lds\n",
+				    isotime(tm),
+				    weekstr,
+				    ((t - now) / (60*60*24)),
+				    ((t - now) / (60*60)) % 24,
+				    ((t - now) / 60) % 60,
+				    (t - now) % 60);
+			}
 			t = find_next(t + 1);
 		}
 		exit(0);

@@ -279,7 +279,7 @@ int main(int argc, char *argv[])
 				perror("stat");
 			t = start - slack - 1 - timewait;
 		} else {
-			t = st.st_mtime;
+			t = st.st_mtime + 1;
 		}
 		if (timewait == -1) {
 			while (t < start - slack)

@@ -64,6 +64,34 @@ parse_int(char **s, size_t minn, size_t maxn)
 	return n;
 }
 
+static long
+parse_dur(char *s)
+{
+	long n;
+	char *end;
+
+	errno = 0;
+	n = strtol(s, &end, 10);
+	if (errno) {
+		perror("strtol");
+		exit(1);
+	}
+	if (n < 0) {
+		fprintf(stderr, "negative duration\n");
+		exit(1);
+	}
+	switch (*end) {
+	case 'm': n *= 60; break;
+	case 'h': n *= 60*60; break;
+	case 'd': n *= 24*60*60; break;
+	case 0: break;
+	default:
+		fprintf(stderr, "junk after duration: %s\n", end);
+		exit(1);
+	}
+	return n;
+}
+
 static int
 parse(char *expr, char *buf, long bufsiz, int offset)
 {
@@ -229,10 +257,10 @@ int main(int argc, char *argv[])
 			break;
 		case 'n': nflag++; break;
 		case 'v': vflag++; break;
-		case 's': slack = atoi(optarg); break;
-		case 'T': timewait = atoi(optarg); break;
+		case 's': slack = parse_dur(optarg); break;
+		case 'T': timewait = parse_dur(optarg); break;
 		case 't': timefile = optarg; break;
-		case 'R': randdelay = atoi(optarg); break;
+		case 'R': randdelay = parse_dur(optarg); break;
 		default:
                         fprintf(stderr, "Usage: %s [-nv] [-t timefile] [-T timewait] [-R randdelay] [-s slack]\n"
 			    "  [-d mday] [-m mon] [-w wday] [-D yday] [-W yweek] [-H hour] [-M min] [-S sec] COMMAND...\n"

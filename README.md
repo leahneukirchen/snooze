@@ -61,6 +61,9 @@ Over uschedule:
 * `-R`: add between 0 and RANDDELAY seconds to the scheduled time.
 * `-s`: commands are executed even if they are SLACK (default: 60) seconds late.
 
+The durations RANDDELAY and SLACK and TIMEWAIT are parsed as seconds,
+unless a postfix of `m` for minutes, `h` for hours, or `d` for days is used.
+
 The remaining arguments are patterns for the time fields:
 
 * `-d`: day of month
@@ -99,7 +102,7 @@ of TIMEFILE plus TIMEWAIT seconds.
 
 When `-T` is *not* passed, snooze will start finding the first matching time
 starting from the mtime of TIMEFILE, and taking SLACK into account.
-(E.g. `-H0 -s$((24*60*60)) -t timefile` will start an instant
+(E.g. `-H0 -s 1d -t timefile` will start an instant
 execution when timefile has not been touched today, whereas without `-t`
 this would always wait until next midnight.)
 
@@ -136,15 +139,15 @@ Run a job like cron, every day at 7am and 7pm:
 
 Run a job daily, never twice a day:
 
-	exec snooze -H0 -s $((24*60*60)) -t timefile \
+	exec snooze -H0 -s 1d -t timefile \
 		sh -c 'run-parts /etc/cron.daily; touch timefile'
 
 Use snooze inline, run a mirror script every hour at 30 minutes past,
 but ensure there are at least 20 minutes in between.
 
 	set -e
-	snooze -H'*' -M30 -t timefile -T $((20*60))
-	touch timefile  # remove this if instantly retrying on failure is ok
+	snooze -H'*' -M30 -t timefile -T 20m
+	touch timefile  # remove this if instantly retrying on failure were ok
 	mirrorallthethings
 	touch timefile
 

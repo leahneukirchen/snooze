@@ -43,8 +43,8 @@ Over uschedule:
 * run at 10 pm on weekdays:
   cron: `0 22 * * 1-5`
   snooze: `-w1-5 -H22`
-* run 23 minutes after midn, 2am, 4am ..., everyday:
-  cron: 23 0-23/2 * * *
+* run 23 minutes after midnight, 2am, 4am ..., everyday:
+  cron: `23 0-23/2 * * *`
   snooze: `-H/2 -M23`
 * run every second week:
   snooze: `-W/2`
@@ -106,7 +106,7 @@ this would always wait until next midnight.)
 If TIMEFILE does not exist, it will be assumed outdated enough to
 ensure earliest execution.
 
-snooze does not update the timefiles, you need to do that!
+snooze does not update the timefiles, your job needs to do that!
 Only mtime is looked at, so touch(1) is good.
 
 ## Exact behavior
@@ -136,7 +136,7 @@ Run a job like cron, every day at 7am and 7pm:
 
 Run a job daily, never twice a day:
 
-	exec snooze -H0 -S $((24*60*60)) -t timefile \
+	exec snooze -H0 -s $((24*60*60)) -t timefile \
 		sh -c 'run-parts /etc/cron.daily; touch timefile'
 
 Use snooze inline, run a mirror script every hour at 30 minutes past,
@@ -152,7 +152,7 @@ Use snooze inline, cron-style mail:
 
 	set -e
 	snooze ...
-        actualjob >output 2>&1 ||
+	actualjob >output 2>&1 ||
 		mail -s "$(hostname): snooze job failed with status $?" root <output
 
 ## Installation

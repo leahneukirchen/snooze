@@ -23,6 +23,7 @@ Over cron:
   runs, even across reboots
 - randomized delays (some cron have that)
 - variable slack (no need for anacron)
+- ad-hoc usage possible, just run the program from command line
 
 Over runwhen:
 - less confusing usage (I hope)
@@ -31,6 +32,7 @@ Over runwhen:
 
 Over uschedule:
 - due to supervision, no centralized daemon required
+- filtering by ISO week and day of year
 
 ## Rosetta stone
 

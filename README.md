@@ -129,7 +129,7 @@ Only mtime is looked at, so touch(1) is good.
 * if we woke due to a SIGALRM, the command is executed immediately as well
 * if the event is in the future, recompute the time it takes, possibly
   considering shifting of the system time or timezone changes
-  (possibly only works on glibc)
+  (timezone reload only tested on glibc)
 * If no command was given, just return with status 0
 * and so on...
 

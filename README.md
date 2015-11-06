@@ -127,6 +127,7 @@ Only mtime is looked at, so touch(1) is good.
   execs the command.  You need to ensure (by setting up supervision)
   snooze runs again after that!
 * if we woke due to a SIGALRM, the command is executed immediately as well
+* if we notice time moved backwards, recompute the time until the event
 * if the event is in the future, recompute the time it takes, possibly
   considering shifting of the system time or timezone changes
   (timezone reload only tested on glibc)

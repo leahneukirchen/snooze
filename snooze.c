@@ -230,6 +230,7 @@ int main(int argc, char *argv[])
 	int c;
 	time_t t;
 	time_t now = time(0);
+	time_t last = 0;
 
 	/* default: every day at 00:00:00 */
 	memset(weekday, '*', sizeof weekday);
@@ -348,6 +349,11 @@ int main(int argc, char *argv[])
 
 	while (!alarm_rang) {
 		now = time(0);
+		if (now < last) {
+			t = find_next(now);
+			if (vflag)
+				printf("Time moved backwards, rescheduled for %s\n", isotime(tm));
+		}
 		t = mktime(tm);
 		if (t <= now) {
 			if (now - t <= slack)  // still about time
@@ -365,6 +371,7 @@ int main(int argc, char *argv[])
 			struct timespec ts;
 			ts.tv_nsec = 0;
 			ts.tv_sec = t - now > SLEEP_PHASE ? SLEEP_PHASE : t - now;
+			last = now;
 			nanosleep(&ts, 0);
 			// we just iterate again when this exits early
 		}

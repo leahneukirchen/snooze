@@ -4,7 +4,7 @@
 running a command.  Together with a service supervision system such as
 runit, this can be used to replace cron(8).
 
-`lr` has been tested on Linux 4.2.
+`snooze` has been tested on Linux 4.2.
 It will likely work on other Unix-like systems with C99.
 
 ## Benefits

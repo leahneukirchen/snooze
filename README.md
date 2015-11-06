@@ -160,6 +160,16 @@ Use snooze inline, cron-style mail:
 	actualjob >output 2>&1 ||
 		mail -s "$(hostname): snooze job failed with status $?" root <output
 
+Snooze for rate-limiting a general purpose runit service: don't
+restart faster than every two minutes. (Note that after a crash with a
+daemon runtime of more than two minutes, it will be restarted
+immediately):
+
+	set -e
+	snooze -H'*' -M'*' -S'*' -t timefile -T 2m
+	touch timefile
+	exec mydaemond
+
 ## Installation
 
 Use `make all` to build, `make install` to install relative to `PREFIX`

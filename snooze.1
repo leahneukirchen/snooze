@@ -116,11 +116,15 @@ where either day of month
 day of week matches), so
 .Cm -w5 -d13
 only runs on Friday the 13th.
+.Pp
+If
+.Nm
+receives a
+.Dv SIGALRM
+signal, the command is immediately executed.
 .Sh TIMEFILES
 Optionally, you can keep track of runs in time files, using
-.Fl t
-and optionally
-.Fl T :
+.Fl t :
 .Pp
 When
 .Fl T

@@ -1,0 +1,189 @@
+.Dd January 4, 2016
+.Dt SNOOZE 1
+.Os
+.Sh NAME
+.Nm snooze
+.Nd run a command at a particular time
+.Sh SYNOPSIS
+.Nm
+.Op Fl nv
+.Op Fl t Ar timefile
+.Op Fl T Ar timewait
+.Op Fl R Ar randdelay
+.Op Fl s Ar slack
+.Op Fl d Ar day
+.Op Fl m Ar mon
+.Op Fl w Ar wday
+.Op Fl D Ar yday
+.Op Fl W Ar yweek
+.Op Fl H Ar hour
+.Op Fl M Ar min
+.Op Fl S Ar sec
+.Ar command\ ...
+.Sh DESCRIPTION
+.Nm
+waits until a particular time and then runs a command.
+Together with a service supervision system such as
+.Xr runsv 8 ,
+this can be used to replace
+.Xr cron 8 .
+.Pp
+The options are as follows:
+.Bl -tag -width Ds
+.It Fl n
+Dry run: print the next 5 times the command would run and exit.
+.It Fl v
+Verbose: print scheduled (and rescheduled) times.
+.It Fl t , Fl T
+See below,
+.Sx TIMEFILES .
+.It Fl R
+Wait randomly up to
+.Ar randdelay
+seconds later than the scheduled time.
+.It Fl s
+Commands are executed even if they are
+.Ar slack
+(default: 60) seconds late.
+.El
+.Pp
+The durations
+.Ar randdelay
+and
+.Ar slack
+and
+.Ar timewait
+are parsed as seconds,
+unless a postfix of
+.Cm m
+for minutes,
+.Cm h
+for hours, or
+.Cm d
+for days is used.
+.Pp
+The remaining arguments are patterns for the time fields:
+.Pp
+.Bl -tag -compact -width xxxxxxxxxx
+.It Fl d
+day of month
+.It Fl n
+month
+.It Fl w
+weekday (0-7, sunday is 0 and 7)
+.It Fl D
+day of year
+.It Fl W
+ISO week of year (0..53)
+.It Fl H
+hour
+.It Fl M
+minute
+.It Fl S
+second
+.El
+.Pp
+The following syntax is used for these options:
+.Bl -tag -width xxxxxxxxxx
+.It Cm -d 3
+exact match: run on the 3rd
+.It Cm -d 3,10,27
+alternation: run on 3rd, 10th, 27th
+.It Cm -d 1-5
+range: run on 1st, 2nd, 3rd, 4th, 5th
+.It Cm -d *
+star: run every day
+.It Cm -d /5
+repetition: run on 5th, 10th, 15th, 20th, 25th, 30th day
+.It Cm -d 2/5
+shifted repetition: run on 7th, 12th, 17th, 22nd, 27th day
+.El
+.Pp
+and combinations of those, e.g.\&
+.Cm -d 1-10,15/5,28 .
+.Pp
+The defaults are
+.Cm -d* -m* -w* -D* -W* -H0 -M0 -S0 ,
+that is, every midnight.
+.Pp
+Note that
+.Em all
+patterns need to match
+(contrary to
+.Xr cron 8
+where either day of month
+.Em or
+day of week matches), so
+.Cm -w5 -d13
+only runs on Friday the 13th.
+.Sh TIMEFILES
+Optionally, you can keep track of runs in time files, using
+.Fl t
+and optionally
+.Fl T :
+.Pp
+When
+.Fl T
+is passed, execution will not start earlier than the mtime
+of
+.Ar timefile
+plus
+.Ar timewait
+seconds.
+.Pp
+When
+.Fl T
+is
+.Em not
+passed,
+.Nm
+will start finding the first matching time
+starting from the mtime of
+.Ar timefile ,
+and taking
+.Ar slack
+into account.
+(E.g.\&
+.Cm -H0 -s 1d -t timefile
+will start an instant
+execution when timefile has not been touched today, whereas without
+.Fl t
+this would always wait until next midnight.)
+.Pp
+If
+.Ar timefile
+does not exist, it will be assumed outdated enough to
+ensure earliest execution.
+.Pp
+.Nm
+does not update the timefiles, your job needs to do that!
+Only mtime is looked at, so
+.Xr touch 1
+is good.
+.Sh EXIT STATUS
+.Ex -std
+.Pp
+The
+.Ar command
+is run using exec, so its exit status gets propagated to the parent.
+.Pp
+If no command was given,
+.Nm
+just returns with status 0.
+.Sh SEE ALSO
+.Xr sleep 1 ,
+.Xr cron 8 ,
+runwhen,
+uschedule
+.Sh AUTHORS
+.An Christian Neukirchen Aq Mt chneukirchen@gmail.com
+.Sh LICENSE
+.Nm
+is in the public domain.
+.Pp
+To the extent possible under law,
+the creator of this work
+has waived all copyright and related or
+neighboring rights to this work.
+.Pp
+.Lk http://creativecommons.org/publicdomain/zero/1.0/

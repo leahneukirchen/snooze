@@ -17,4 +17,8 @@ install: FRC all
 	install -m0755 $(ALL) $(DESTDIR)$(BINDIR)
 	install -m0644 $(ALL:=.1) $(DESTDIR)$(MANDIR)/man1
 
+uninstall:
+	rm -f $(DESTDIR)$(BINDIR)/$(ALL)
+	rm -f $(DESTDIR)$(MANDIR)/man1/$(ALL).1
+
 FRC:

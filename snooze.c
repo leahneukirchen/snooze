@@ -1,15 +1,10 @@
 /*
  * snooze - run a command at a particular time
  *
- * To the extent possible under law,
- * Christian Neukirchen <chneukirchen@gmail.com>
+ * To the extent possible under law, Leah Neukirchen <leah@vuxu.org>
  * has waived all copyright and related or neighboring rights to this work.
  * http://creativecommons.org/publicdomain/zero/1.0/
  */
-
-/*
-##% gcc -Os -Wall -g -o $STEM $FILE -Wextra -Wwrite-strings
-*/
 
 #include <sys/stat.h>
 #include <sys/types.h>

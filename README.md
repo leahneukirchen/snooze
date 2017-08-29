@@ -181,9 +181,7 @@ You can also just copy the binary into your `PATH`.
 
 snooze is in the public domain.
 
-To the extent possible under law,
-Christian Neukirchen <chneukirchen@gmail.com>
-has waived all copyright and related or
-neighboring rights to this work.
+To the extent possible under law, Leah Neukirchen <leah@vuxu.org>
+has waived all copyright and related or neighboring rights to this work.
 
 http://creativecommons.org/publicdomain/zero/1.0/

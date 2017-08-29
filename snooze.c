@@ -120,7 +120,7 @@ parse(char *expr, char *buf, long bufsiz, int offset)
 			for (i = n0; i < bufsiz; i += n)
 				buf[i+offset] = '*';
 			break;
-                case ',':
+		case ',':
 			s++;
 			n = 0;
 			break;
@@ -168,11 +168,12 @@ find_next(time_t from)
 	tm = localtime(&t);
 
 next_day:
-	while (!(weekday[tm->tm_wday] == '*'
-	    && dayofmonth[tm->tm_mday-1] == '*'
-	    && month[tm->tm_mon] == '*'
-	    && weekofyear[isoweek(tm)-1] == '*'
-	    && dayofyear[tm->tm_yday] == '*')) {
+	while (!(
+	    weekday[tm->tm_wday] == '*' &&
+	    dayofmonth[tm->tm_mday-1] == '*' &&
+	    month[tm->tm_mon] == '*' &&
+	    weekofyear[isoweek(tm)-1] == '*' &&
+	    dayofyear[tm->tm_yday] == '*')) {
 		if (month[tm->tm_mon] != '*') {
 			// if month is not good, step month
 			tm->tm_mon++;
@@ -192,9 +193,10 @@ next_day:
 
 	int y = tm->tm_yday;  // save yday
 
-	while (!(hour[tm->tm_hour] == '*'
-	    && minute[tm->tm_min] == '*'
-	    && second[tm->tm_sec] == '*')) {
+	while (!(
+	    hour[tm->tm_hour] == '*' &&
+	    minute[tm->tm_min] == '*' &&
+	    second[tm->tm_sec] == '*')) {
 		if (hour[tm->tm_hour] != '*') {
 			tm->tm_hour++;
 			tm->tm_min = 0;
@@ -209,7 +211,7 @@ next_day:
 		if (tm->tm_yday != y)  // hit a different day, retry...
 			goto next_day;
 	}
-	    
+
 	return t;
 }
 
@@ -221,7 +223,8 @@ isotime(const struct tm *tm)
 	return isobuf;
 }
 
-int main(int argc, char *argv[])
+int
+main(int argc, char *argv[])
 {
 	int c;
 	time_t t;
@@ -239,7 +242,7 @@ int main(int argc, char *argv[])
 	second[0] = '*';
 
 	while ((c = getopt(argc, argv, "+D:W:H:M:S:T:R:d:m:ns:t:vw:")) != -1)
-                switch(c) {
+		switch (c) {
 		case 'D': parse(optarg, dayofyear, sizeof dayofyear, -1); break;
 		case 'W': parse(optarg, weekofyear, sizeof weekofyear, -1); break;
 		case 'H': parse(optarg, hour, sizeof hour, 0); break;
@@ -259,13 +262,13 @@ int main(int argc, char *argv[])
 		case 't': timefile = optarg; break;
 		case 'R': randdelay = parse_dur(optarg); break;
 		default:
-                        fprintf(stderr, "Usage: %s [-nv] [-t timefile] [-T timewait] [-R randdelay] [-s slack]\n"
+			fprintf(stderr, "Usage: %s [-nv] [-t timefile] [-T timewait] [-R randdelay] [-s slack]\n"
 			    "  [-d mday] [-m mon] [-w wday] [-D yday] [-W yweek] [-H hour] [-M min] [-S sec] COMMAND...\n"
 			    "Timespec: exact: 1,3,5\n"
 			    "          range: 1-7\n"
 			    "          every n-th: /10\n", argv[0]);
-                        exit(2);
-                }
+			exit(2);
+		}
 
 	time_t start = now + 1;
 

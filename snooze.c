@@ -242,7 +242,7 @@ int main(int argc, char *argv[])
 	minute[0] = '*';
 	second[0] = '*';
 
-	while ((c = getopt(argc, argv, "D:W:H:M:S:T:R:d:m:ns:t:vw:")) != -1)
+	while ((c = getopt(argc, argv, "+D:W:H:M:S:T:R:d:m:ns:t:vw:")) != -1)
                 switch(c) {
 		case 'D': parse(optarg, dayofyear, sizeof dayofyear, -1); break;
 		case 'W': parse(optarg, weekofyear, sizeof weekofyear, -1); break;

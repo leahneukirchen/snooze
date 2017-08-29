@@ -241,7 +241,7 @@ int main(int argc, char *argv[])
 	while ((c = getopt(argc, argv, "+D:W:H:M:S:T:R:d:m:ns:t:vw:")) != -1)
                 switch(c) {
 		case 'D': parse(optarg, dayofyear, sizeof dayofyear, -1); break;
-		case 'W': parse(optarg, weekofyear, sizeof weekofyear, -1); break;
+		case 'W': parse(optarg, weekofyear, sizeof weekofyear, 0); break;
 		case 'H': parse(optarg, hour, sizeof hour, 0); break;
 		case 'M': parse(optarg, minute, sizeof minute, 0); break;
 		case 'S': parse(optarg, second, sizeof second, 0); break;

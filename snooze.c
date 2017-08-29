@@ -142,7 +142,7 @@ parse(char *expr, char *buf, long bufsiz, int offset)
 char weekday[8] = {0};
 char dayofmonth[31] = {0};
 char month[12] = {0};
-char dayofyear[366] = {0};
+char dayofyear[367] = {0};
 char weekofyear[54] = {0};
 char hour[24] = {0};
 char minute[60] = {0};
@@ -171,7 +171,7 @@ next_day:
 	while (!(weekday[tm->tm_wday] == '*'
 	    && dayofmonth[tm->tm_mday-1] == '*'
 	    && month[tm->tm_mon] == '*'
-	    && weekofyear[isoweek(tm)] == '*'
+	    && weekofyear[isoweek(tm)-1] == '*'
 	    && dayofyear[tm->tm_yday] == '*')) {
 		if (month[tm->tm_mon] != '*') {
 			// if month is not good, step month
@@ -241,7 +241,7 @@ int main(int argc, char *argv[])
 	while ((c = getopt(argc, argv, "+D:W:H:M:S:T:R:d:m:ns:t:vw:")) != -1)
                 switch(c) {
 		case 'D': parse(optarg, dayofyear, sizeof dayofyear, -1); break;
-		case 'W': parse(optarg, weekofyear, sizeof weekofyear, 0); break;
+		case 'W': parse(optarg, weekofyear, sizeof weekofyear, -1); break;
 		case 'H': parse(optarg, hour, sizeof hour, 0); break;
 		case 'M': parse(optarg, minute, sizeof minute, 0); break;
 		case 'S': parse(optarg, second, sizeof second, 0); break;

@@ -185,7 +185,7 @@ next_day:
 		tm->tm_hour = 0;
 
 		t = mktime(tm);
-		if (t > from+(365*24*60*60))  // no result within a year
+		if (t > from+(366*24*60*60))  // no result within a year
 			return -1;
 	}
 

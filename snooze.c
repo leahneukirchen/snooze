@@ -113,7 +113,8 @@ parse(char *expr, char *buf, long bufsiz, int offset)
 		case '/':
 			s++;
 			n0 = n;
-			n = parse_int(&s, -offset, bufsiz);
+			if (*s)
+				n = parse_int(&s, -offset, bufsiz);
 			if (n == 0)  // / = *
 				n = 1;
 			for (i = n0; i < bufsiz; i += n)

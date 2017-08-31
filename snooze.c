@@ -99,7 +99,7 @@ parse(char *expr, char *buf, long bufsiz, int offset)
 	while (*s) {
 		switch (*s) {
 		case '0': case '1': case '2': case '3': case '4':
-                case '5': case '6': case '7': case '8': case '9':
+		case '5': case '6': case '7': case '8': case '9':
 			n = parse_int(&s, -offset, bufsiz);
 			buf[n+offset] = '*';
 			break;
@@ -252,7 +252,7 @@ main(int argc, char *argv[])
 		case 'm': parse(optarg, month, sizeof month, -1); break;
 		case 'w': parse(optarg, weekday, sizeof weekday, 0);
 			// special case: sunday is both 0 and 7.
-			if (weekday[7] == '*') 
+			if (weekday[7] == '*')
 				weekday[0] = '*';
 			break;
 		case 'n': nflag++; break;

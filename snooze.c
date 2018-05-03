@@ -182,11 +182,14 @@ next_day:
 			tm->tm_mday++;
 		}
 
+		tm->tm_isdst = -1;
 		tm->tm_sec = 0;
 		tm->tm_min = 0;
 		tm->tm_hour = 0;
 
 		t = mktime(tm);
+		tm->tm_isdst = -1;
+
 		if (t > from+(366*24*60*60))  // no result within a year
 			return -1;
 	}

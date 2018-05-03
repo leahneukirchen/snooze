@@ -140,8 +140,8 @@ parse(char *expr, char *buf, long bufsiz, int offset)
 }
 
 char weekday[8] = {0};
-char dayofmonth[31] = {0};
-char month[12] = {0};
+char dayofmonth[32] = {0};
+char month[13] = {0};
 char dayofyear[367] = {0};
 char weekofyear[54] = {0};
 char hour[24] = {0};

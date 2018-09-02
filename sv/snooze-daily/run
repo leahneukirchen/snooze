@@ -1,0 +1,3 @@
+#!/bin/sh
+mkdir -p /var/cache/snooze
+exec snooze -s 1d -t /var/cache/snooze/daily -- run-parts --lsbsysinit /etc/cron.daily

@@ -1,0 +1,3 @@
+#!/bin/sh
+mkdir -p /var/cache/snooze
+exec snooze -d 1 -s 28d -t /var/cache/snooze/monthly -- run-parts --lsbsysinit /etc/cron.monthly

@@ -1,4 +1,4 @@
 #!/bin/sh
 mkdir -p /var/cache/snooze
 exec snooze -H \* -s 1h -t /var/cache/snooze/hourly -- sh -c \
-	"run-parts --lsbsysinit /etc/cron.hourly; : > /var/cache/snooze/hourly"
+	"test -d /etc/cron.hourly && run-parts --lsbsysinit /etc/cron.hourly; : > /var/cache/snooze/hourly"

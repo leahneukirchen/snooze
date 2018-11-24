@@ -1,4 +1,4 @@
 #!/bin/sh
 mkdir -p /var/cache/snooze
 exec snooze -w 0 -s 7d -t /var/cache/snooze/weekly -- sh -c \
-	"run-parts --lsbsysinit /etc/cron.weekly; : > /var/cache/snooze/weekly"
+	"test -d /etc/cron.weekly && run-parts --lsbsysinit /etc/cron.weekly; : > /var/cache/snooze/weekly"

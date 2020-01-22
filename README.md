@@ -34,6 +34,17 @@ Over uschedule:
 - due to supervision, no centralized daemon required
 - filtering by ISO week and day of year
 
+Over systemd timers:
+- mnemonic syntax
+- less complexity for jobs, no need for a `<job>.timer` file distinct
+  from the `<job>.service` file,
+- can use a file timestamp to ensure minimum waiting time between two
+  runs, even across reboots
+- very robust with respect to external time changes
+- randomized delays
+- variable slack
+- ad-hoc usage possible, just run the program from command line
+
 ## Rosetta stone
 
 * run five minutes after midnight, every day:

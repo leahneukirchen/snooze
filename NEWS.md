@@ -1,5 +1,15 @@
 ## HEAD
 
+## 0.4 (2020-02-07)
+
+* Feature: include runit service files to run cron drop-in scripts.
+* Bug: force stdout line-buffered.
+
+## 0.3 (2018-05-05)
+
+* Bug: off-by-one for month and day of month.
+* Bug: weird scheduling across DST changes.
+
 ## 0.2 (2017-08-29)
 
 * Bug: Enforce POSIX option processing (stop argument parsing after

@@ -28,6 +28,7 @@ static int nflag, vflag;
 
 static int timewait = -1;
 static int randdelay = 0;
+static int jitter = 0;
 static char *timefile;
 
 static sig_atomic_t alarm_rang = 0;
@@ -215,6 +216,14 @@ next_day:
 			goto next_day;
 	}
 
+	if (jitter && !nflag) {
+		long delay;
+		delay = lrand48() % jitter;
+		if (vflag)
+			printf("adding %lds for jitter.\n", delay);
+		t += delay;
+	}
+
 	return t;
 }
 
@@ -246,7 +255,7 @@ main(int argc, char *argv[])
 
 	setvbuf(stdout, 0, _IOLBF, 0);
 
-	while ((c = getopt(argc, argv, "+D:W:H:M:S:T:R:d:m:ns:t:vw:")) != -1)
+	while ((c = getopt(argc, argv, "+D:W:H:M:S:T:R:J:d:m:ns:t:vw:")) != -1)
 		switch (c) {
 		case 'D': parse(optarg, dayofyear, sizeof dayofyear, -1); break;
 		case 'W': parse(optarg, weekofyear, sizeof weekofyear, -1); break;
@@ -266,8 +275,9 @@ main(int argc, char *argv[])
 		case 'T': timewait = parse_dur(optarg); break;
 		case 't': timefile = optarg; break;
 		case 'R': randdelay = parse_dur(optarg); break;
+		case 'J': jitter = parse_dur(optarg); break;
 		default:
-			fprintf(stderr, "Usage: %s [-nv] [-t timefile] [-T timewait] [-R randdelay] [-s slack]\n"
+			fprintf(stderr, "Usage: %s [-nv] [-t timefile] [-T timewait] [-R randdelay] [-J jitter] [-s slack]\n"
 			    "  [-d mday] [-m mon] [-w wday] [-D yday] [-W yweek] [-H hour] [-M min] [-S sec] COMMAND...\n"
 			    "Timespec: exact: 1,3,5\n"
 			    "          range: 1-7\n"
@@ -296,18 +306,11 @@ main(int argc, char *argv[])
 		}
 	}
 
+	srand48(getpid() ^ start);
+
 	if (randdelay) {
 		long delay;
-#ifdef __linux__
-		long rnd = getauxval(AT_RANDOM);
-		if (rnd > 0)
-			delay = rnd % randdelay;
-		else
-#endif
-		{
-			srand48(getpid() ^ start);
-			delay = lrand48() % randdelay;
-		}
+		delay = lrand48() % randdelay;
 		if (vflag)
 			printf("randomly delaying by %lds.\n", delay);
 		start += delay;
@@ -326,13 +329,18 @@ main(int argc, char *argv[])
 			char weekstr[4];
 			struct tm *tm = localtime(&t);
 			strftime(weekstr, sizeof weekstr, "%a", tm);
-			printf("%s %s %2ldd%3ldh%3ldm%3lds\n",
+			printf("%s %s %2ldd%3ldh%3ldm%3lds ",
 			    isotime(tm),
 			    weekstr,
 			    ((t - now) / (60*60*24)),
 			    ((t - now) / (60*60)) % 24,
 			    ((t - now) / 60) % 60,
 			    (t - now) % 60);
+			if(jitter) {
+				printf("(plus up to %ds for jitter)\n", jitter);
+			} else {
+				printf("\n");
+			}
 			t = find_next(t + 1);
 			if (t < 0) {
 				fprintf(stderr,

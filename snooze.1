@@ -10,6 +10,7 @@
 .Op Fl t Ar timefile
 .Op Fl T Ar timewait
 .Op Fl R Ar randdelay
+.Op Fl J Ar jitter
 .Op Fl s Ar slack
 .Op Fl d Ar day
 .Op Fl m Ar mon
@@ -38,9 +39,13 @@ Verbose: print scheduled (and rescheduled) times.
 See below,
 .Sx TIMEFILES .
 .It Fl R
-Wait randomly up to
+Delay determination of scheduled time randomly up to
 .Ar randdelay
-seconds later than the scheduled time.
+seconds later.
+.It Fl J
+Delay execution randomly up to
+.Ar jitter
+seconds later than scheduled time.
 .It Fl s
 Commands are executed even if they are
 .Ar slack

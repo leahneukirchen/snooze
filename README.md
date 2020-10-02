@@ -71,10 +71,11 @@ Over systemd timers:
 * `-n`: dry-run, print the next 5 times the command would run.
 * `-v`: verbose, print scheduled (and rescheduled) times.
 * `-t`, `-T`: see below timefiles
-* `-R`: add between 0 and RANDDELAY seconds to the scheduled time.
+* `-R`: add between 0 and RANDDELAY seconds to the start of the scheduled time.
+* `-J`: add between 0 and JITTER seconds to scheduled execution time.
 * `-s`: commands are executed even if they are SLACK (default: 60) seconds late.
 
-The durations RANDDELAY and SLACK and TIMEWAIT are parsed as seconds,
+The durations RANDDELAY and JITTER and SLACK and TIMEWAIT are parsed as seconds,
 unless a postfix of `m` for minutes, `h` for hours, or `d` for days is used.
 
 The remaining arguments are patterns for the time fields:

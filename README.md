@@ -52,7 +52,7 @@ Over systemd timers:
   snooze: `-M5`
 * run at 2:15pm on the first of every month:
   cron: `15 14 1 * *`
-  snooze: `-d1 -H2 -M15`
+  snooze: `-d1 -H14 -M15`
 * run at 10 pm on weekdays:
   cron: `0 22 * * 1-5`
   snooze: `-w1-5 -H22`

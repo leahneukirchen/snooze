@@ -392,15 +392,15 @@ main(int argc, char *argv[])
 		}
 	}
 
-	// no command to run, the outside script can go on
-	if (argc == optind)
-		return 0;
-
 	if (vflag) {
 		now = time(0);
 		tm = localtime(&now);
 		printf("Starting execution at %s\n", isotime(tm));
 	}
+
+	// no command to run, the outside script can go on
+	if (argc == optind)
+		return 0;
 
 	execvp(argv[optind], argv+optind);
 	perror("execvp");

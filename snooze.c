@@ -302,7 +302,7 @@ main(int argc, char *argv[])
 			start = t;
 		} else {
 			if (t + timewait > start - slack)
-				start = st.st_mtime + timewait;
+				start = t + timewait;
 		}
 	}
 

@@ -1,4 +1,4 @@
 #!/bin/sh
 mkdir -p /var/cache/snooze
 exec snooze -s 1d -t /var/cache/snooze/daily -- sh -c \
-	"test -d /etc/cron.daily && run-parts --lsbsysinit /etc/cron.daily; : > /var/cache/snooze/daily"
+	"test -d /etc/cron.daily && run-parts --lsbsysinit /etc/cron.daily; touch /var/cache/snooze/daily"

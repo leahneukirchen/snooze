@@ -31,7 +31,7 @@ static int randdelay = 0;
 static int jitter = 0;
 static char *timefile;
 
-static sig_atomic_t alarm_rang = 0;
+static volatile sig_atomic_t alarm_rang = 0;
 
 static void
 wakeup(int sig)
@@ -356,11 +356,11 @@ main(int argc, char *argv[])
 		printf("Snoozing until %s\n", isotime(tm));
 
 	// setup SIGALRM handler to force early execution
-	struct sigaction sa;
+	struct sigaction sa = { 0 };
 	sa.sa_handler = &wakeup;
 	sa.sa_flags = SA_RESTART;
 	sigfillset(&sa.sa_mask);
-	sigaction(SIGALRM, &sa, NULL);  // XXX error handling
+	sigaction(SIGALRM, &sa, NULL);
 
 	while (!alarm_rang) {
 		now = time(0);

@@ -33,6 +33,180 @@ static char *timefile;
 
 static volatile sig_atomic_t alarm_rang = 0;
 
+#ifdef __linux__
+#include <stdint.h>
+#include <inttypes.h>
+#include <fcntl.h>
+#include <sys/ioctl.h>
+#include <linux/rtc.h>
+
+#define DEFAULT_RTC_DEVICE	"/dev/rtc0"
+#define RTC_MIN_DELTA		300
+#define RTC_WKALM_SLACK		60
+
+static const char *inhibitcmd = "/usr/bin/elogind-inhibit";
+static const char *inhibitcmd_args[] = {
+	"--why=snooze command running scheduled task",
+	"--what=idle:sleep:handle-suspend-key:handle-hibernate-key",
+	"--mode=block",
+	"--no-pager",
+	"--no-legend",
+};
+static const int inhibitcmd_n_args = sizeof(inhibitcmd_args) / sizeof(inhibitcmd_args[0]);
+
+static int
+rtc_wake_at(time_t *at)
+{
+	struct tm tm = { 0 };
+	struct rtc_time rtc;
+	struct rtc_wkalrm wake = { 0 };
+	int fd = -1, err = 0, retries = 10;
+	char s[64];
+	time_t wake_time, sys_time, rtc_time;
+	int64_t delta;
+
+	// slightly reduce wake time, so machine has the time to exit sleep
+	if (*at > RTC_WKALM_SLACK)
+		*at -= RTC_WKALM_SLACK;
+
+	sys_time = time(NULL);
+	if (sys_time == (time_t)-1) {
+		err = -1;
+		fprintf(stderr, "failed to read system time\n");
+		goto err_out;
+	}
+
+	if (vflag) {
+		gmtime_r(at, &tm);
+		fprintf(stderr, "[RTC]: wake requested for epoch %"PRId64", (UTC) %s", (int64_t) *at, asctime_r(&tm, s));
+	}
+
+	delta = (int64_t)*at - (int64_t)sys_time;
+	if (delta < RTC_MIN_DELTA) {
+		goto err_out;
+	}
+
+retry:
+	errno = 0;
+	fd = open(DEFAULT_RTC_DEVICE, O_RDWR);
+	if (0 > fd) {
+		if (errno == EBUSY || errno == EWOULDBLOCK || errno == EAGAIN || errno == EINTR) {
+			if (retries-- > 0) {
+				sleep(1);
+				goto retry;
+			}
+		}
+		fprintf(stderr, "failed to open RTC device\n");
+		goto err_out;
+	}
+
+	errno = 0;
+	if ((err = ioctl(fd, RTC_RD_TIME, &rtc)) < 0) {
+		fprintf(stderr, "failed to read RTC time\n");
+		goto err_out;
+	}
+
+	tm.tm_sec = rtc.tm_sec;
+	tm.tm_min = rtc.tm_min;
+	tm.tm_hour = rtc.tm_hour;
+	tm.tm_mday = rtc.tm_mday;
+	tm.tm_mon = rtc.tm_mon;
+	tm.tm_year = rtc.tm_year;
+	tm.tm_isdst = -1; /* assume system knows better than RTC */
+
+	rtc_time = mktime(&tm);
+	if (rtc_time == (time_t)-1) {
+		err = -1;
+		fprintf(stderr, "convert RTC time failed\n");
+		goto err_out;
+	}
+
+	delta = (int64_t)sys_time - rtc_time;
+
+	if (vflag) {
+		gmtime_r(&sys_time, &tm);
+		printf("sys_time = %"PRId64", (UTC) %s", (int64_t) sys_time, asctime_r(&tm, s));
+
+		gmtime_r(&rtc_time, &tm);
+		printf("rtc_time = %"PRId64", (UTC) %s", (int64_t) rtc_time, asctime_r(&tm, s));
+	}
+
+	if ((err = ioctl(fd, RTC_WKALM_RD, &wake)) < 0) {
+		fprintf(stderr, "set RTC wake alarm failed");
+		goto err_out;
+	}
+
+	tm.tm_sec = wake.time.tm_sec;
+	tm.tm_min = wake.time.tm_min;
+	tm.tm_hour = wake.time.tm_hour;
+	tm.tm_mday = wake.time.tm_mday;
+	tm.tm_mon = wake.time.tm_mon;
+	tm.tm_year = wake.time.tm_year;
+	tm.tm_isdst = -1;
+	wake_time = mktime(&tm);
+	if (wake_time == (time_t)-1) {
+		err = -1;
+		fprintf(stderr, "convert RTC wake alarm failed\n");
+		goto err_out;
+	}
+
+	if (vflag) {
+		gmtime_r(&wake_time, &tm);
+		printf("rtc_wake_time = %"PRId64", (UTC) %s", (int64_t) wake_time, asctime_r(&tm, s));
+	}
+
+	// validate the RTC is "close" to system time. If not, we cannot use device!
+	if ((delta > 0 ? delta : -delta) > RTC_MIN_DELTA) {
+		fprintf(stderr, "clock skew of %"PRId64" seconds detected.\n", delta);
+		err = -1;
+		goto err_out;
+	}
+
+	// validate the requested time is actually in the future!
+	if (*at <= sys_time) {
+		if (vflag)
+			fprintf(stderr, "requested wake time has past!\n");
+		err = -1;
+		goto err_out;
+	}
+
+	// ensure our requested time is actually before the current RTC wake alarm.
+	if (*at > wake_time && wake_time >= sys_time) {
+		err = 0; // not an error
+		goto err_out;
+	} else if (wake_time == *at) {
+		err = 0; // not an error
+		goto err_out;
+	}
+
+	if (vflag)
+		printf("[RTC]: programming device...\n");
+
+	// build value to store
+	localtime_r(at, &tm);
+	wake.time.tm_sec = tm.tm_sec;
+	wake.time.tm_min = tm.tm_min;
+	wake.time.tm_hour = tm.tm_hour;
+	wake.time.tm_mday = tm.tm_mday;
+	wake.time.tm_mon = tm.tm_mon;
+	wake.time.tm_year = tm.tm_year;
+	wake.time.tm_wday = -1;
+	wake.time.tm_yday = -1;
+	wake.time.tm_isdst = -1;
+	wake.enabled = 1;
+
+	if ((err = ioctl(fd, RTC_WKALM_SET, &wake)) < 0) {
+		fprintf(stderr, "set RTC wake alarm failed");
+		goto err_out;
+	}
+
+err_out:
+	if (fd != -1)
+		close(fd);
+	return err;
+}
+#endif
+
 static void
 wakeup(int sig)
 {
@@ -255,6 +429,11 @@ main(int argc, char *argv[])
 
 	setvbuf(stdout, 0, _IOLBF, 0);
 
+#ifdef __linux__
+	setenv("TZ", "UTC", 1);
+	tzset();
+#endif
+
 	while ((c = getopt(argc, argv, "+D:W:H:M:S:T:R:J:d:m:ns:t:vw:")) != -1)
 		switch (c) {
 		case 'D': parse(optarg, dayofyear, sizeof dayofyear, -1); break;
@@ -382,6 +561,10 @@ main(int argc, char *argv[])
 					printf("Snoozing until %s\n", isotime(tm));
 			}
 		} else {
+#ifdef __linux__
+			if (t - now > RTC_WKALM_SLACK)
+				rtc_wake_at(&t);
+#endif
 			// do some sleeping, but not more than SLEEP_PHASE
 			struct timespec ts;
 			ts.tv_nsec = 0;
@@ -402,7 +585,28 @@ main(int argc, char *argv[])
 	if (argc == optind)
 		return 0;
 
+#ifdef __linux__
+	int n_args = argc - optind;
+	char *args[n_args + 2 + inhibitcmd_n_args];
+	memset(args, 0, sizeof(args));
+
+	args[0] = calloc(1, strlen(inhibitcmd) + 1);
+	memcpy(args[0], inhibitcmd, strlen(inhibitcmd));
+
+	for (int i = 0; i < inhibitcmd_n_args; ++i) {
+		args[i+1] = calloc(1, strlen(inhibitcmd_args[i]) + 1);
+		memcpy(args[i+1], inhibitcmd_args[i], strlen(inhibitcmd_args[i]));
+	}
+
+	for (int i = 0; i < n_args; ++i) {
+		args[i+1+inhibitcmd_n_args] = calloc(1, strlen(argv[optind+i]) + 1);
+		memcpy(args[i+1+inhibitcmd_n_args], argv[optind+i], strlen(argv[optind+i]));
+	}
+
+	execvp(args[0], args);
+#else
 	execvp(argv[optind], argv+optind);
+#endif
 	perror("execvp");
 	return 255;
 }

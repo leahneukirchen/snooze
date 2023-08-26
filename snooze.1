@@ -1,4 +1,4 @@
-.Dd January 4, 2016
+.Dd August 26, 2023
 .Dt SNOOZE 1
 .Os
 .Sh NAME
@@ -50,6 +50,10 @@ seconds later than scheduled time.
 Commands are executed even if they are
 .Ar slack
 (default: 60) seconds late.
+.Em Caveat:
+This will not result in immediate execution unless
+.Sx TIMEFILES
+are used.
 .El
 .Pp
 The durations

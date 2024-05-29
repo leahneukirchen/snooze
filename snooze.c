@@ -329,13 +329,13 @@ main(int argc, char *argv[])
 			char weekstr[4];
 			struct tm *tm = localtime(&t);
 			strftime(weekstr, sizeof weekstr, "%a", tm);
-			printf("%s %s %2ldd%3ldh%3ldm%3lds ",
+			printf("%s %s %2dd%3dh%3dm%3ds ",
 			    isotime(tm),
 			    weekstr,
-			    ((t - now) / (60*60*24)),
-			    ((t - now) / (60*60)) % 24,
-			    ((t - now) / 60) % 60,
-			    (t - now) % 60);
+			    ((int)(t - now) / (60*60*24)),
+			    ((int)(t - now) / (60*60)) % 24,
+			    ((int)(t - now) / 60) % 60,
+			    (int)(t - now) % 60);
 			if(jitter) {
 				printf("(plus up to %ds for jitter)\n", jitter);
 			} else {

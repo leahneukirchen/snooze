@@ -301,8 +301,7 @@ main(int argc, char *argv[])
 				t = find_next(t + 1);
 			start = t;
 		} else {
-			if (t + timewait > start - slack)
-				start = t + timewait;
+			start = t + timewait;
 		}
 	}
 
@@ -369,18 +368,17 @@ main(int argc, char *argv[])
 			if (vflag)
 				printf("Time moved backwards, rescheduled for %s\n", isotime(tm));
 		}
-		t = mktime(tm);
-		if (t <= now) {
-			if (now - t <= slack)  // still about time
-				break;
-			else {  // reschedule to next event
-				if (vflag)
-					printf("Missed execution at %s\n", isobuf);
-				t = find_next(now + 1);
+
+		while (t < now - slack) {
+			if (vflag) {
 				tm = localtime(&t);
-				if (vflag)
-					printf("Snoozing until %s\n", isotime(tm));
+				printf("Missed execution at %s\n", isotime(tm));
 			}
+			t = find_next(t + 1);
+		}
+
+		if (t <= now) {
+			break;
 		} else {
 			// do some sleeping, but not more than SLEEP_PHASE
 			struct timespec ts;

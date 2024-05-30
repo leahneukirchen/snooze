@@ -353,8 +353,7 @@ main(int argc, char *argv[])
 			}
 			start = t;
 		} else {
-			if (t + timewait > start - slack)
-				start = t + timewait;
+			start = t + timewait;
 		}
 	}
 

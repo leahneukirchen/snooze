@@ -301,8 +301,7 @@ main(int argc, char *argv[])
 				t = find_next(t + 1);
 			start = t;
 		} else {
-			if (t + timewait > start - slack)
-				start = t + timewait;
+			start = t + timewait;
 		}
 	}
 

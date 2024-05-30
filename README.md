@@ -130,7 +130,7 @@ Only mtime is looked at, so touch(1) is good.
 
 * snooze parses the option flags and computes the first time the
   date pattern matches, as a symbolic date
-* if a timefile is specified, the time is upped to timefile + timewait seconds
+* if a timefile is specified, the time is changed to timefile + timewait seconds
 * if a random delay is requested, it is added
 * snooze computes how far this event is in the future
 * snooze sleeps that long, but at most 5 minutes

@@ -18,10 +18,6 @@
 #include <time.h>
 #include <unistd.h>
 
-#ifdef __linux__
-#include <sys/auxv.h>
-#endif
-
 static long slack = 60;
 #define SLEEP_PHASE 300
 static int nflag, vflag;

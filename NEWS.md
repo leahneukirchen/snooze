@@ -1,5 +1,9 @@
 ## HEAD
 
+## 0.5.1 (2025-10-03)
+
+* Minor bug fixes and documentation improvements.
+
 ## 0.5 (2021-01-14)
 
 * Feature: add `-J` for jitter.

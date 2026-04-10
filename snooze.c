@@ -257,7 +257,7 @@ main(int argc, char *argv[])
 		case 'W': parse(optarg, weekofyear, sizeof weekofyear, -1); break;
 		case 'H': parse(optarg, hour, sizeof hour, 0); break;
 		case 'M': parse(optarg, minute, sizeof minute, 0); break;
-		case 'S': parse(optarg, second, sizeof second, 0); break;
+		case 'S': parse(optarg, second, 60, 0); break;
 		case 'd': parse(optarg, dayofmonth, sizeof dayofmonth, -1); break;
 		case 'm': parse(optarg, month, sizeof month, -1); break;
 		case 'w': parse(optarg, weekday, sizeof weekday, 0);

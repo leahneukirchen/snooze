@@ -88,7 +88,7 @@ static int
 parse(char *expr, char *buf, long bufsiz, int offset)
 {
 	char *s;
-	long i, n = 0, n0 = 0;
+	long i, n = -offset, n0 = 0;
 
 	memset(buf, ' ', bufsiz);
 
@@ -119,13 +119,12 @@ parse(char *expr, char *buf, long bufsiz, int offset)
 			break;
 		case ',':
 			s++;
-			n = 0;
+			n = -offset;
 			break;
 		case '*':
 			s++;
-			n = 0;
-			for (i = 0; i < bufsiz; i++)
-				buf[i+offset] = '*';
+			n = -offset;
+			memset(buf, '*', bufsiz);
 			break;
 		default:
 			fprintf(stderr, "can't parse: %s %s\n", expr, s);

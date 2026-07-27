@@ -123,6 +123,8 @@ parse(char *expr, char *buf, long bufsiz, int offset)
 		case '*':
 			s++;
 			n = -offset;
+			if (*s == '/')  // cron-style */N, same as /N
+				break;
 			memset(buf, '*', bufsiz);
 			break;
 		default:

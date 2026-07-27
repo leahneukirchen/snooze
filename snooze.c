@@ -48,7 +48,7 @@ parse_int(char **s, size_t minn, size_t maxn)
 		exit(1);
 	}
 	if (n < (long)minn || n >= (long)maxn) {
-		fprintf(stderr, "number outside %zd <= n < %zd\n", minn, maxn);
+		fprintf(stderr, "number outside %zu <= n < %zu\n", minn, maxn);
 		exit(1);
 	}
 	*s = end;

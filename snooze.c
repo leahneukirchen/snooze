@@ -8,6 +8,7 @@
 
 #define _XOPEN_SOURCE 700
 
+#include <sys/select.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 
@@ -24,6 +25,7 @@
 
 static long slack = 60;
 #define SLEEP_PHASE 300
+#define MAX_DURATION (366L * 24 * 60 * 60)
 static int nflag, vflag;
 
 static long timewait = -1;
@@ -110,8 +112,10 @@ parse_dur(char *s)
 		fprintf(stderr, "duration out of range: %s\n", s);
 		exit(1);
 	}
-	if (n > 366L * 24 * 60 * 60)
-		goto range;
+	if (n > MAX_DURATION) {
+		fprintf(stderr, "duration out of range: %s\n", s);
+		exit(1);
+	}
 	return n;
 }
 
@@ -119,8 +123,13 @@ static int
 parse(char *expr, char *buf, size_t bufsiz, int offset)
 {
 	char *s = expr;
+	if (bufsiz == 0 || bufsiz > (size_t)LONG_MAX) {
+		fprintf(stderr, "invalid expression buffer size\n");
+		exit(2);
+	}
+	long size = (long)bufsiz;
 	long min_val = -offset;
-	long max_val = bufsiz - 1 - offset;
+	long max_val = size - 1 - offset;
 
 	if (*s == '\0') {
 		fprintf(stderr, "empty time expression\n");
@@ -140,10 +149,10 @@ parse(char *expr, char *buf, size_t bufsiz, int offset)
 			start = min_val;
 			end = max_val;
 		} else if (*s >= '0' && *s <= '9') {
-			start = parse_int(&s, min_val, bufsiz);
+			start = parse_int(&s, min_val, size);
 			if (*s == '-') {
 				s++;
-				end = parse_int(&s, min_val, bufsiz);
+				end = parse_int(&s, min_val, size);
 			} else if (*s == '/') {
 				end = max_val;
 			} else {
@@ -157,7 +166,7 @@ parse(char *expr, char *buf, size_t bufsiz, int offset)
 		if (*s == '/') {
 			s++;
 			if (*s >= '0' && *s <= '9') {
-				step = parse_int(&s, 1, bufsiz);
+				step = parse_int(&s, 1, size);
 			} else {
 				fprintf(stderr, "expected step number after '/' in: %s\n", expr);
 				exit(1);
@@ -209,13 +218,13 @@ isoweek(struct tm *tm)
 		fprintf(stderr, "strftime failed\n");
 		exit(2);
 	}
-	return parse_int(&w, 1, 54);
+	return (int)parse_int(&w, 1, 54);
 }
 
 static int
 search_too_far(time_t t, time_t from)
 {
-	return t == (time_t)-1 || t < from || t - from > (time_t)366 * 24 * 60 * 60;
+	return t == (time_t)-1 || t < from || t - from > (time_t)MAX_DURATION;
 }
 
 time_t
@@ -282,7 +291,7 @@ next_day:
 
 	if (jitter > 0 && !nflag) {
 		long delay;
-		delay = lrand48() % jitter;
+		delay = lrand48() % (jitter + 1);
 		if (vflag)
 			printf("adding %lds for jitter.\n", delay);
 		t += delay;
@@ -308,6 +317,10 @@ main(int argc, char *argv[])
 	int c;
 	time_t t;
 	time_t now = time(0);
+	if (now == (time_t)-1) {
+		perror("time");
+		exit(2);
+	}
 	time_t last = 0;
 
 	/* default: every day at 00:00:00 */
@@ -384,7 +397,7 @@ main(int argc, char *argv[])
 
 	if (randdelay > 0) {
 		long delay;
-		delay = lrand48() % randdelay;
+		delay = lrand48() % (randdelay + 1);
 		if (vflag)
 			printf("randomly delaying by %lds.\n", delay);
 		start += delay;
@@ -443,18 +456,33 @@ main(int argc, char *argv[])
 	if (vflag)
 		printf("Snoozing until %s\n", isotime(tm));
 
-	// setup SIGALRM handler to force early execution
+	// allow external SIGALRM to trigger immediate execution
+	sigset_t alarm_set, original_mask, wait_mask;
+	sigemptyset(&alarm_set);
+	sigaddset(&alarm_set, SIGALRM);
+	if (sigprocmask(SIG_BLOCK, &alarm_set, &original_mask) < 0) {
+		perror("sigprocmask");
+		exit(2);
+	}
+
 	struct sigaction sa = { 0 };
-	sa.sa_handler = &wakeup;
-	sa.sa_flags = SA_RESTART;
+	sa.sa_handler = wakeup;
+	sa.sa_flags = 0;
 	sigfillset(&sa.sa_mask);
 	if (sigaction(SIGALRM, &sa, NULL) < 0) {
 		perror("sigaction");
 		exit(2);
 	}
 
+	wait_mask = original_mask;
+	sigdelset(&wait_mask, SIGALRM);
+
 	while (!alarm_rang) {
 		now = time(0);
+		if (now == (time_t)-1) {
+			perror("time");
+			exit(2);
+		}
 		if (now < last) {
 			t = find_next(now);
 			if (t < 0) {
@@ -469,8 +497,6 @@ main(int argc, char *argv[])
 			if (vflag)
 				printf("Time moved backwards, rescheduled for %s\n", isotime(tm));
 		}
-		tm->tm_isdst = -1;
-		t = mktime(tm);
 		if (t <= now) {
 			if (now - t <= slack)  // still about time
 				break;
@@ -496,16 +522,32 @@ main(int argc, char *argv[])
 			ts.tv_nsec = 0;
 			ts.tv_sec = t - now > SLEEP_PHASE ? SLEEP_PHASE : t - now;
 			last = now;
-			nanosleep(&ts, 0);
+			int rc = pselect(0, NULL, NULL, NULL, &ts, &wait_mask);
+			if (rc < 0 && errno != EINTR) {
+				perror("pselect");
+				exit(2);
+			}
 			// we just iterate again when this exits early
 		}
 	}
 
 	if (vflag) {
-		now = time(0);
+		now = time(NULL);
+		if (now == (time_t)-1) {
+			perror("time");
+			exit(2);
+		}
 		tm = localtime_r(&now, &tmbuf);
-		if (tm)
-			printf("Starting execution at %s\n", isotime(tm));
+		if (!tm) {
+			fprintf(stderr, "localtime failed\n");
+			exit(2);
+		}
+		printf("Starting execution at %s\n", isotime(tm));
+	}
+
+	if (sigprocmask(SIG_SETMASK, &original_mask, NULL) < 0) {
+		perror("sigprocmask");
+		exit(2);
 	}
 
 	// no command to run, the outside script can go on

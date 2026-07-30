@@ -36,7 +36,7 @@ wakeup(int sig)
 }
 
 static long
-parse_int(char **s, size_t minn, size_t maxn)
+parse_int(char **s, long minn, long maxn)
 {
 	long n;
 	char *end;
@@ -47,8 +47,12 @@ parse_int(char **s, size_t minn, size_t maxn)
 		perror("strtol");
 		exit(1);
 	}
-	if (n < (long)minn || n >= (long)maxn) {
-		fprintf(stderr, "number outside %zu <= n < %zu\n", minn, maxn);
+	if (end == *s) {
+		fprintf(stderr, "expected number, got: %s\n", *s);
+		exit(1);
+	}
+	if (n < minn || n >= maxn) {
+		fprintf(stderr, "number outside %ld <= n < %ld\n", minn, maxn);
 		exit(1);
 	}
 	*s = end;
@@ -67,16 +71,31 @@ parse_dur(char *s)
 		perror("strtol");
 		exit(1);
 	}
+	if (end == s) {
+		fprintf(stderr, "invalid duration: %s\n", s);
+		exit(1);
+	}
 	if (n < 0) {
 		fprintf(stderr, "negative duration\n");
 		exit(1);
 	}
 	switch (*end) {
-	case 'm': n *= 60; break;
-	case 'h': n *= 60*60; break;
-	case 'd': n *= 24*60*60; break;
-	case 0: break;
+	case 'm':
+		if (end[1] != '\0') goto junk;
+		n *= 60;
+		break;
+	case 'h':
+		if (end[1] != '\0') goto junk;
+		n *= 60*60;
+		break;
+	case 'd':
+		if (end[1] != '\0') goto junk;
+		n *= 24*60*60;
+		break;
+	case 0:
+		break;
 	default:
+	junk:
 		fprintf(stderr, "junk after duration: %s\n", end);
 		exit(1);
 	}

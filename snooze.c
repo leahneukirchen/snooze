@@ -360,6 +360,11 @@ main(int argc, char *argv[])
 		now = time(0);
 		if (now < last) {
 			t = find_next(now);
+			if (t < 0) {
+				fprintf(stderr, "no satisfying date found within a year.\n");
+				exit(2);
+			}
+			tm = localtime(&t);
 			if (vflag)
 				printf("Time moved backwards, rescheduled for %s\n", isotime(tm));
 		}

@@ -222,7 +222,6 @@ next_day:
 		tm->tm_hour = 0;
 
 		t = mktime(tm);
-		tm->tm_isdst = -1;
 
 		if (search_too_far(t, from))
 			return -1;

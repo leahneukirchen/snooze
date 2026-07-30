@@ -6,6 +6,9 @@
  * http://creativecommons.org/publicdomain/zero/1.0/
  */
 
+#define _XOPEN_SOURCE 700
+
+#include <sys/select.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 
@@ -404,12 +407,24 @@ main(int argc, char *argv[])
 	if (vflag)
 		printf("Snoozing until %s\n", isotime(tm));
 
-	// setup SIGALRM handler to force early execution
-	struct sigaction sa = { 0 };
-	sa.sa_handler = &wakeup;
-	sa.sa_flags = SA_RESTART;
+	// allow external SIGALRM to trigger immediate execution
+	sigset_t alarm_set, original_mask, wait_mask;
+	sigemptyset(&alarm_set);
+	sigaddset(&alarm_set, SIGALRM);
+	if (sigprocmask(SIG_BLOCK, &alarm_set, &original_mask) < 0) {
+		perror("sigprocmask");
+		exit(2);
+	}
+
+	struct sigaction sa = {
+		.sa_handler = wakeup,
+		.sa_flags = 0
+	};
 	sigfillset(&sa.sa_mask);
-	sigaction(SIGALRM, &sa, NULL);
+	sigaction(SIGALRM, &sa, 0);
+
+	wait_mask = original_mask;
+	sigdelset(&wait_mask, SIGALRM);
 
 	while (!alarm_rang) {
 		now = time(0);
@@ -440,12 +455,19 @@ main(int argc, char *argv[])
 					printf("Snoozing until %s\n", isotime(tm));
 			}
 		} else {
-			// do some sleeping, but not more than SLEEP_PHASE
-			struct timespec ts;
-			ts.tv_nsec = 0;
-			ts.tv_sec = t - now > SLEEP_PHASE ? SLEEP_PHASE : t - now;
 			last = now;
-			nanosleep(&ts, 0);
+
+ 			// do some sleeping, but not more than SLEEP_PHASE
+			struct timespec ts = {
+				.tv_sec = t - now > SLEEP_PHASE ? SLEEP_PHASE : t - now,
+				.tv_nsec = 0,
+			};
+			if (pselect(0, 0, 0, 0, &ts, &wait_mask) < 0) {
+				if (errno != EINTR) {
+					perror("pselect");
+					exit(2);
+				}
+			}
 			// we just iterate again when this exits early
 		}
 	}
@@ -454,6 +476,11 @@ main(int argc, char *argv[])
 		now = time(0);
 		tm = localtime(&now);
 		printf("Starting execution at %s\n", isotime(tm));
+	}
+
+	if (sigprocmask(SIG_SETMASK, &original_mask, 0) < 0) {
+		perror("sigprocmask");
+		exit(2);
 	}
 
 	// no command to run, the outside script can go on

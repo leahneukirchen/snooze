@@ -6,6 +6,8 @@
  * http://creativecommons.org/publicdomain/zero/1.0/
  */
 
+#define _XOPEN_SOURCE 700
+
 #include <sys/stat.h>
 #include <sys/types.h>
 

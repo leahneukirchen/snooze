@@ -120,6 +120,11 @@ parse(char *expr, char *buf, size_t bufsiz, int offset)
 	long min_val = -offset;
 	long max_val = bufsiz - 1 - offset;
 
+	if (*s == '\0') {
+		fprintf(stderr, "empty time expression\n");
+		exit(1);
+	}
+
 	memset(buf, ' ', bufsiz);
 
 	while (*s) {
@@ -152,7 +157,8 @@ parse(char *expr, char *buf, size_t bufsiz, int offset)
 			if (*s >= '0' && *s <= '9') {
 				step = parse_int(&s, 1, bufsiz);
 			} else {
-				step = 1;
+				fprintf(stderr, "expected step number after '/' in: %s\n", expr);
+				exit(1);
 			}
 		} else {
 			step = 1;
@@ -169,6 +175,10 @@ parse(char *expr, char *buf, size_t bufsiz, int offset)
 
 		if (*s == ',') {
 			s++;
+			if (*s == '\0') {
+				fprintf(stderr, "trailing comma in expression: %s\n", expr);
+				exit(1);
+			}
 		} else if (*s != '\0') {
 			fprintf(stderr, "can't parse: %s %s\n", expr, s);
 			exit(1);

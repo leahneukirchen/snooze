@@ -288,7 +288,7 @@ main(int argc, char *argv[])
 		case 'W': parse(optarg, weekofyear, sizeof weekofyear, -1); break;
 		case 'H': parse(optarg, hour, sizeof hour, 0); break;
 		case 'M': parse(optarg, minute, sizeof minute, 0); break;
-		case 'S': parse(optarg, second, 60, 0); break;
+		case 'S': parse(optarg, second, sizeof second, 0); break;
 		case 'd': parse(optarg, dayofmonth, sizeof dayofmonth, -1); break;
 		case 'm': parse(optarg, month, sizeof month, -1); break;
 		case 'w': parse(optarg, weekday, sizeof weekday, 0);
@@ -324,8 +324,13 @@ main(int argc, char *argv[])
 			t = st.st_mtime + 1;
 		}
 		if (timewait == -1) {
-			while (t < start - slack)
+			while (t < start - slack) {
 				t = find_next(t + 1);
+				if (t < 0) {
+					fprintf(stderr, "no satisfying date found within a year.\n");
+					exit(2);
+				}
+			}
 			start = t;
 		} else {
 			if (t + timewait > start - slack)
@@ -409,6 +414,10 @@ main(int argc, char *argv[])
 				if (vflag)
 					printf("Missed execution at %s\n", isobuf);
 				t = find_next(now + 1);
+				if (t < 0) {
+					fprintf(stderr, "no satisfying date found within a year.\n");
+					exit(2);
+				}
 				tm = localtime(&t);
 				if (vflag)
 					printf("Snoozing until %s\n", isotime(tm));

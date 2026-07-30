@@ -112,7 +112,7 @@ parse_dur(char *s)
 }
 
 static int
-parse(char *expr, char *buf, long bufsiz, int offset)
+parse(char *expr, char *buf, size_t bufsiz, int offset)
 {
 	char *s = expr;
 	long min_val = -offset;
@@ -195,6 +195,12 @@ isoweek(struct tm *tm)
 	return parse_int(&w, 1, 54);
 }
 
+static int
+search_too_far(time_t t, time_t from)
+{
+	return t == (time_t)-1 || t < from || t - from > (time_t)366 * 24 * 60 * 60;
+}
+
 time_t
 find_next(time_t from)
 {
@@ -229,7 +235,7 @@ next_day:
 		t = mktime(tm);
 		tm->tm_isdst = -1;
 
-		if (t == (time_t)-1 || t < from || t - from > (time_t)366*24*60*60)  // no result within a year or overflow
+		if (search_too_far(t, from))
 			return -1;
 	}
 
@@ -249,8 +255,9 @@ next_day:
 		} else {
 			tm->tm_sec++;
 		}
+		tm->tm_isdst = -1;
 		t = mktime(tm);
-		if (t == (time_t)-1)
+		if (search_too_far(t, from))
 			return -1;
 		if (tm->tm_yday != y)  // hit a different day, retry...
 			goto next_day;
@@ -419,6 +426,7 @@ main(int argc, char *argv[])
 			if (vflag)
 				printf("Time moved backwards, rescheduled for %s\n", isotime(tm));
 		}
+		tm->tm_isdst = -1;
 		t = mktime(tm);
 		if (t <= now) {
 			if (now - t <= slack)  // still about time

@@ -114,6 +114,11 @@ parse(char *expr, char *buf, size_t bufsiz, int offset)
 	long min_val = -offset;
 	long max_val = bufsiz - 1 - offset;
 
+	if (!*s) {
+		fprintf(stderr, "empty time expression\n");
+		exit(1);
+	}
+
 	memset(buf, ' ', bufsiz);
 
 	while (*s) {
@@ -158,6 +163,10 @@ parse(char *expr, char *buf, size_t bufsiz, int offset)
 
 		if (*s == ',') {
 			s++;
+			if (!*s) {
+				fprintf(stderr, "trailing comma in expression: '%s'\n", expr);
+				exit(1);
+			}
 		} else if (*s) {
 			fprintf(stderr, "can't parse '%s': error on '%s'\n", expr, s);
 			exit(1);

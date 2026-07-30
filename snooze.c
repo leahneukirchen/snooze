@@ -86,46 +86,60 @@ parse_dur(char *s)
 static int
 parse(char *expr, char *buf, long bufsiz, int offset)
 {
-	char *s;
-	long i, n = -offset, n0 = 0;
+	char *s = expr;
+	long min_val = -offset;
+	long max_val = bufsiz - 1 - offset;
 
 	memset(buf, ' ', bufsiz);
 
-	s = expr;
 	while (*s) {
-		switch (*s) {
-		case '0': case '1': case '2': case '3': case '4':
-		case '5': case '6': case '7': case '8': case '9':
-			n = parse_int(&s, -offset, bufsiz);
-			buf[n+offset] = '*';
-			break;
-		case '-':
-			n0 = n;
+		long start, end, step;
+
+		if (*s == '*') {
+			start = min_val;
+			end = max_val;
 			s++;
-			n = parse_int(&s, -offset, bufsiz);
-			for (i = n0; i <= n; i++)
-				buf[i+offset] = '*';
-			break;
-		case '/':
+		} else if (*s == '/') {
+			start = min_val;
+			end = max_val;
+		} else if (*s >= '0' && *s <= '9') {
+			start = parse_int(&s, min_val, bufsiz);
+			if (*s == '-') {
+				s++;
+				end = parse_int(&s, min_val, bufsiz);
+			} else if (*s == '/') {
+				end = max_val;
+			} else {
+				end = start;
+			}
+		} else {
+			fprintf(stderr, "can't parse: %s %s\n", expr, s);
+			exit(1);
+		}
+
+		if (*s == '/') {
 			s++;
-			n0 = n;
-			if (*s)
-				n = parse_int(&s, -offset, bufsiz);
-			if (n == 0)  // / = *
-				n = 1;
-			for (i = n0; i < bufsiz; i += n)
-				buf[i+offset] = '*';
-			break;
-		case ',':
+			if (*s >= '0' && *s <= '9') {
+				step = parse_int(&s, 1, bufsiz);
+			} else {
+				step = 1;
+			}
+		} else {
+			step = 1;
+		}
+
+		if (start > end) {
+			fprintf(stderr, "invalid range: %ld-%ld\n", start, end);
+			exit(1);
+		}
+
+		for (long i = start; i <= end; i += step) {
+			buf[i + offset] = '*';
+		}
+
+		if (*s == ',') {
 			s++;
-			n = -offset;
-			break;
-		case '*':
-			s++;
-			n = -offset;
-			memset(buf, '*', bufsiz);
-			break;
-		default:
+		} else if (*s != '\0') {
 			fprintf(stderr, "can't parse: %s %s\n", expr, s);
 			exit(1);
 		}

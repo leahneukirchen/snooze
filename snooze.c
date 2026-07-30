@@ -323,8 +323,13 @@ main(int argc, char *argv[])
 			t = st.st_mtime + 1;
 		}
 		if (timewait == -1) {
-			while (t < start - slack)
+			while (t < start - slack) {
 				t = find_next(t + 1);
+				if (t < 0) {
+					fprintf(stderr, "no satisfying date found within a year.\n");
+					exit(2);
+				}
+			}
 			start = t;
 		} else {
 			if (t + timewait > start - slack)
@@ -408,6 +413,10 @@ main(int argc, char *argv[])
 				if (vflag)
 					printf("Missed execution at %s\n", isobuf);
 				t = find_next(now + 1);
+				if (t < 0) {
+					fprintf(stderr, "no satisfying date found within a year.\n");
+					exit(2);
+				}
 				tm = localtime(&t);
 				if (vflag)
 					printf("Snoozing until %s\n", isotime(tm));

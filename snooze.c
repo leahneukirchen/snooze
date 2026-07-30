@@ -19,6 +19,7 @@
 
 static long slack = 60;
 #define SLEEP_PHASE 300
+#define MAX_DURATION (366L * 24 * 60 * 60)
 static int nflag, vflag;
 
 static long timewait = -1;
@@ -99,7 +100,7 @@ parse_dur(char *s)
 		exit(1);
 	}
 
-	if (n > 366L * 24 * 60 * 60) {
+	if (n > MAX_DURATION) {
 		fprintf(stderr, "duration out of range: %s\n", s);
 		exit(1);
 	}
@@ -198,7 +199,7 @@ isoweek(struct tm *tm)
 static int
 search_too_far(time_t t, time_t from)
 {
-	return t == (time_t)-1 || t < from || t - from > (time_t)366 * 24 * 60 * 60;
+	return t == (time_t)-1 || t < from || t - from > (time_t)MAX_DURATION;
 }
 
 time_t

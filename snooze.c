@@ -22,9 +22,9 @@ static long slack = 60;
 #define SLEEP_PHASE 300
 static int nflag, vflag;
 
-static int timewait = -1;
-static int randdelay = 0;
-static int jitter = 0;
+static long timewait = -1;
+static long randdelay = 0;
+static long jitter = 0;
 static char *timefile;
 
 static volatile sig_atomic_t alarm_rang = 0;
@@ -263,7 +263,7 @@ next_day:
 			goto next_day;
 	}
 
-	if (jitter && !nflag) {
+	if (jitter > 0 && !nflag) {
 		long delay;
 		delay = lrand48() % jitter;
 		if (vflag)
@@ -360,7 +360,7 @@ main(int argc, char *argv[])
 
 	srand48(getpid() ^ start);
 
-	if (randdelay) {
+	if (randdelay > 0) {
 		long delay;
 		delay = lrand48() % randdelay;
 		if (vflag)
@@ -389,7 +389,7 @@ main(int argc, char *argv[])
 			    ((int)(t - now) / 60) % 60,
 			    (int)(t - now) % 60);
 			if(jitter) {
-				printf("(plus up to %ds for jitter)\n", jitter);
+				printf("(plus up to %lds for jitter)\n", jitter);
 			} else {
 				printf("\n");
 			}

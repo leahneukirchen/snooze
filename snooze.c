@@ -10,8 +10,10 @@
 #include <sys/types.h>
 
 #include <errno.h>
+#include <inttypes.h>
 #include <limits.h>
 #include <signal.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -380,14 +382,19 @@ main(int argc, char *argv[])
 		for (i = 0; i < 5; i++) {
 			char weekstr[4];
 			struct tm *tm = localtime(&t);
+			if (!tm) {
+				fprintf(stderr, "localtime failed\n");
+				exit(2);
+			}
 			strftime(weekstr, sizeof weekstr, "%a", tm);
-			printf("%s %s %2dd%3dh%3dm%3ds ",
+			intmax_t delta = (intmax_t)t - (intmax_t)now;
+			printf("%s %s %2" PRIdMAX "d%3" PRIdMAX "h%3" PRIdMAX "m%3" PRIdMAX "s ",
 			    isotime(tm),
 			    weekstr,
-			    ((int)(t - now) / (60*60*24)),
-			    ((int)(t - now) / (60*60)) % 24,
-			    ((int)(t - now) / 60) % 60,
-			    (int)(t - now) % 60);
+			    delta / (60*60*24),
+			    (delta / (60*60)) % 24,
+			    (delta / 60) % 60,
+			    delta % 60);
 			if(jitter) {
 				printf("(plus up to %lds for jitter)\n", jitter);
 			} else {

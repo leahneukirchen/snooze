@@ -99,6 +99,11 @@ parse_dur(char *s)
 		exit(1);
 	}
 
+	if (n > 366L * 24 * 60 * 60) {
+		fprintf(stderr, "duration out of range: %s\n", s);
+		exit(1);
+	}
+
 	return n;
 }
 
@@ -213,7 +218,7 @@ next_day:
 		t = mktime(tm);
 		tm->tm_isdst = -1;
 
-		if (t > from+(366*24*60*60))  // no result within a year
+		if (t < from || t - from > (time_t)366*24*60*60)  // no result within a year
 			return -1;
 	}
 

@@ -262,7 +262,7 @@ next_day:
 
 	if (jitter > 0 && !nflag) {
 		long delay;
-		delay = lrand48() % jitter;
+		delay = lrand48() % (jitter + 1);
 		if (vflag)
 			printf("adding %lds for jitter.\n", delay);
 		t += delay;
@@ -359,7 +359,7 @@ main(int argc, char *argv[])
 
 	if (randdelay > 0) {
 		long delay;
-		delay = lrand48() % randdelay;
+		delay = lrand48() % (randdelay + 1);
 		if (vflag)
 			printf("randomly delaying by %lds.\n", delay);
 		start += delay;

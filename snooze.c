@@ -203,7 +203,10 @@ isoweek(struct tm *tm)
 	/* ugh, but easier than the correct formula... */
 	char weekstr[8];
 	char *w = weekstr;
-	strftime(weekstr, sizeof weekstr, "%V", tm);
+	if (strftime(weekstr, sizeof weekstr, "%V", tm) == 0) {
+		fprintf(stderr, "strftime failed\n");
+		exit(2);
+	}
 	return parse_int(&w, 1, 54);
 }
 
@@ -217,10 +220,10 @@ time_t
 find_next(time_t from)
 {
 	time_t t;
-	struct tm *tm;
+	struct tm tmbuf, *tm;
 
 	t = from;
-	tm = localtime(&t);
+	tm = localtime_r(&t, &tmbuf);
 	if (!tm)
 		return -1;
 
@@ -290,7 +293,10 @@ static char isobuf[64];
 char *
 isotime(const struct tm *tm)
 {
-	strftime(isobuf, sizeof isobuf, "%FT%T%z", tm);
+	if (strftime(isobuf, sizeof isobuf, "%FT%T%z", tm) == 0) {
+		fprintf(stderr, "strftime failed\n");
+		exit(2);
+	}
 	return isobuf;
 }
 
@@ -349,8 +355,10 @@ main(int argc, char *argv[])
 	if (timefile) {
 		struct stat st;
 		if (stat(timefile, &st) < 0) {
-			if (errno != ENOENT)
+			if (errno != ENOENT) {
 				perror("stat");
+				exit(2);
+			}
 			t = start - slack - 1 - timewait;
 		} else {
 			t = st.st_mtime + 1;
@@ -391,12 +399,16 @@ main(int argc, char *argv[])
 		int i;
 		for (i = 0; i < 5; i++) {
 			char weekstr[4];
-			struct tm *tm = localtime(&t);
+			struct tm tmbuf;
+			struct tm *tm = localtime_r(&t, &tmbuf);
 			if (!tm) {
 				fprintf(stderr, "localtime failed\n");
 				exit(2);
 			}
-			strftime(weekstr, sizeof weekstr, "%a", tm);
+			if (strftime(weekstr, sizeof weekstr, "%a", tm) == 0) {
+				fprintf(stderr, "strftime failed\n");
+				exit(2);
+			}
 			intmax_t delta = (intmax_t)t - (intmax_t)now;
 			printf("%s %s %2" PRIdMAX "d%3" PRIdMAX "h%3" PRIdMAX "m%3" PRIdMAX "s ",
 			    isotime(tm),
@@ -420,7 +432,12 @@ main(int argc, char *argv[])
 		exit(0);
 	}
 
-	struct tm *tm = localtime(&t);
+	struct tm tmbuf;
+	struct tm *tm = localtime_r(&t, &tmbuf);
+	if (!tm) {
+		fprintf(stderr, "localtime failed\n");
+		exit(2);
+	}
 	if (vflag)
 		printf("Snoozing until %s\n", isotime(tm));
 
@@ -429,7 +446,10 @@ main(int argc, char *argv[])
 	sa.sa_handler = &wakeup;
 	sa.sa_flags = SA_RESTART;
 	sigfillset(&sa.sa_mask);
-	sigaction(SIGALRM, &sa, NULL);
+	if (sigaction(SIGALRM, &sa, NULL) < 0) {
+		perror("sigaction");
+		exit(2);
+	}
 
 	while (!alarm_rang) {
 		now = time(0);
@@ -439,7 +459,11 @@ main(int argc, char *argv[])
 				fprintf(stderr, "no satisfying date found within a year.\n");
 				exit(2);
 			}
-			tm = localtime(&t);
+			tm = localtime_r(&t, &tmbuf);
+			if (!tm) {
+				fprintf(stderr, "localtime failed\n");
+				exit(2);
+			}
 			if (vflag)
 				printf("Time moved backwards, rescheduled for %s\n", isotime(tm));
 		}
@@ -456,7 +480,11 @@ main(int argc, char *argv[])
 					fprintf(stderr, "no satisfying date found within a year.\n");
 					exit(2);
 				}
-				tm = localtime(&t);
+				tm = localtime_r(&t, &tmbuf);
+				if (!tm) {
+					fprintf(stderr, "localtime failed\n");
+					exit(2);
+				}
 				if (vflag)
 					printf("Snoozing until %s\n", isotime(tm));
 			}
@@ -473,8 +501,9 @@ main(int argc, char *argv[])
 
 	if (vflag) {
 		now = time(0);
-		tm = localtime(&now);
-		printf("Starting execution at %s\n", isotime(tm));
+		tm = localtime_r(&now, &tmbuf);
+		if (tm)
+			printf("Starting execution at %s\n", isotime(tm));
 	}
 
 	// no command to run, the outside script can go on

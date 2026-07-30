@@ -180,7 +180,7 @@ int
 isoweek(struct tm *tm)
 {
 	/* ugh, but easier than the correct formula... */
-	char weekstr[3];
+	char weekstr[8];
 	char *w = weekstr;
 	strftime(weekstr, sizeof weekstr, "%V", tm);
 	return parse_int(&w, 1, 54);
@@ -254,7 +254,7 @@ next_day:
 	return t;
 }
 
-static char isobuf[25];
+static char isobuf[64];
 char *
 isotime(const struct tm *tm)
 {

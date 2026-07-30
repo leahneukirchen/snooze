@@ -10,6 +10,7 @@
 #include <sys/types.h>
 
 #include <errno.h>
+#include <limits.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -82,14 +83,17 @@ parse_dur(char *s)
 	switch (*end) {
 	case 'm':
 		if (end[1] != '\0') goto junk;
+		if (n > LONG_MAX / 60) goto range;
 		n *= 60;
 		break;
 	case 'h':
 		if (end[1] != '\0') goto junk;
+		if (n > LONG_MAX / 3600) goto range;
 		n *= 60*60;
 		break;
 	case 'd':
 		if (end[1] != '\0') goto junk;
+		if (n > LONG_MAX / 86400) goto range;
 		n *= 24*60*60;
 		break;
 	case 0:
@@ -98,7 +102,12 @@ parse_dur(char *s)
 	junk:
 		fprintf(stderr, "junk after duration: %s\n", end);
 		exit(1);
+	range:
+		fprintf(stderr, "duration out of range: %s\n", s);
+		exit(1);
 	}
+	if (n > 366L * 24 * 60 * 60)
+		goto range;
 	return n;
 }
 
@@ -194,6 +203,8 @@ find_next(time_t from)
 
 	t = from;
 	tm = localtime(&t);
+	if (!tm)
+		return -1;
 
 next_day:
 	while (!(
@@ -218,7 +229,7 @@ next_day:
 		t = mktime(tm);
 		tm->tm_isdst = -1;
 
-		if (t > from+(366*24*60*60))  // no result within a year
+		if (t == (time_t)-1 || t < from || t - from > (time_t)366*24*60*60)  // no result within a year or overflow
 			return -1;
 	}
 
@@ -239,6 +250,8 @@ next_day:
 			tm->tm_sec++;
 		}
 		t = mktime(tm);
+		if (t == (time_t)-1)
+			return -1;
 		if (tm->tm_yday != y)  // hit a different day, retry...
 			goto next_day;
 	}

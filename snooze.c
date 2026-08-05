@@ -62,21 +62,17 @@ parse_int(char **s, long minn, long maxn)
 static long
 parse_dur(char *s)
 {
-	long n;
+	unsigned long n;
 	char *end;
 
 	errno = 0;
-	n = strtol(s, &end, 10);
+	n = strtoul(s, &end, 10);
 	if (errno) {
-		perror("strtol");
+		perror("strtoul");
 		exit(1);
 	}
 	if (end == s) {
 		fprintf(stderr, "invalid duration: '%s'\n", s);
-		exit(1);
-	}
-	if (n < 0) {
-		fprintf(stderr, "negative duration\n");
 		exit(1);
 	}
 

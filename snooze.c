@@ -35,8 +35,8 @@ static volatile sig_atomic_t alarm_rang = 0;
 static void
 wakeup(int sig)
 {
-	(void)sig;
-	alarm_rang = 1;
+	if (sig == SIGALRM)
+		alarm_rang = 1;
 }
 
 static long
@@ -411,6 +411,7 @@ main(int argc, char *argv[])
 	sigset_t alarm_set, original_mask, wait_mask;
 	sigemptyset(&alarm_set);
 	sigaddset(&alarm_set, SIGALRM);
+	sigaddset(&alarm_set, SIGCONT);
 	if (sigprocmask(SIG_BLOCK, &alarm_set, &original_mask) < 0) {
 		perror("sigprocmask");
 		exit(2);
@@ -422,9 +423,11 @@ main(int argc, char *argv[])
 	};
 	sigfillset(&sa.sa_mask);
 	sigaction(SIGALRM, &sa, 0);
+	sigaction(SIGCONT, &sa, 0);
 
 	wait_mask = original_mask;
 	sigdelset(&wait_mask, SIGALRM);
+	sigdelset(&wait_mask, SIGCONT);
 
 	while (!alarm_rang) {
 		now = time(0);

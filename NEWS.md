@@ -1,5 +1,17 @@
 ## HEAD
 
+## 0.6 (2026-08-11)
+
+* Incompatible change: if a timefile has missed execution in the past,
+  trigger immediately (this is the behavior you usually want for
+  anacron-like behavior).
+* Feature: `4-7/2` is now parsed correctly.
+* Feature: `*/4` is now parsed like `/4`.
+* Feature: reevaluate timer on SIGCONT.
+* Bugfix: fix race condition in SIGALRM.
+* Bugfix: jitter and randdelay were off by one.
+* Many small bugfixes and code improvements.
+
 ## 0.5.1 (2025-10-03)
 
 * Minor bug fixes and documentation improvements.

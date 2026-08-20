@@ -126,7 +126,7 @@ parse(char *expr, char *buf, size_t bufsiz, int offset)
 	memset(buf, ' ', bufsiz);
 
 	while (*s) {
-		long start, end;
+		long start, end, i;
 		long step = 1;
 
 		if (*s == '*') {
@@ -162,7 +162,7 @@ parse(char *expr, char *buf, size_t bufsiz, int offset)
 			exit(1);
 		}
 
-		for (long i = start; i <= end; i += step)
+		for (i = start; i <= end; i += step)
 			buf[i + offset] = '*';
 
 		if (*s == ',') {
